@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Plan Vault - GradePath</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.API_BASE_URL = window.API_BASE_URL || 'https://ai.vishnulabs.dev/api';
+    </script>
+    <script src="script.js?v=20260722-1" defer></script>
+</head>
+<body id="page-vault">
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <i class="fas fa-graduation-cap"></i> GradePath
+        </a>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="courses.html">Courses</a>
+            <a href="customize.html">Customize</a>
+            <a href="vault.html" class="active">History</a>
+        </nav>
+        <div id="header-actions" class="header-actions"></div>
+    </header>
+
+    <main class="main-content">
+        <div class="page-title-section">
+            <h1>Unified Plan <span class="gradient-text">Vault</span></h1>
+            <p>Every generated plan resides in this unified vault. Select any chronological history session to review details or reopen it as the active plan.</p>
+        </div>
+
+        <div class="glass-card vault-layout">
+            <!-- Left panel: Sessions list -->
+            <div id="vault-sessions-container" class="vault-sessions-list">
+                <!-- Populated dynamically by script.js -->
+            </div>
+
+            <!-- Right panel: Conversational chat log -->
+            <div class="vault-chat-viewer">
+                <div class="vault-chat-header">
+                    <h3 id="chat-header-title" style="margin: 0;">Vault Session Detail</h3>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;"><i class="fas fa-history"></i> Session Audit Log</span>
+                </div>
+                
+                <div id="chat-body-container" class="vault-chat-body">
+                    <div style="text-align: center; color: var(--text-muted); margin-top: 5rem;">
+                        <i class="far fa-comments" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p>Select a history session from the left column to view details.</p>
+                    </div>
+                </div>
+                
+                <div id="chat-actions-container" class="vault-chat-actions">
+                    <!-- Populated dynamically by script.js -->
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

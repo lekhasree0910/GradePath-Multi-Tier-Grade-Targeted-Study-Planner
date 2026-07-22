@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customize Study Plan - GradePath</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.API_BASE_URL = window.API_BASE_URL || 'https://ai.vishnulabs.dev/api';
+    </script>
+    <script src="script.js?v=20260722-1" defer></script>
+</head>
+<body id="page-customize">
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <i class="fas fa-graduation-cap"></i> GradePath
+        </a>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="courses.html">Courses</a>
+            <a href="customize.html" class="active">Customize</a>
+            <a href="vault.html">History</a>
+        </nav>
+        <div id="header-actions" class="header-actions"></div>
+    </header>
+
+    <main class="main-content">
+        <div class="page-title-section">
+            <h1>Customize <span class="gradient-text">Study Planner</span></h1>
+            <p>Define your test criteria and upload a syllabus. GradePath will derive three grade-calibrated plans from a single complexity analysis.</p>
+        </div>
+        
+        <div class="customize-grid">
+            <div class="glass-card">
+                <form id="customize-form" data-uploaded-text="">
+                    <h3 style="border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Target Criteria</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label for="cust-category">Exam Category</label>
+                            <select id="cust-category" class="form-control" required>
+                                <option value="Competitive">Competitive Entrance (JEE, NEET, etc.)</option>
+                                <option value="Academic">Academic Semester (High School, University)</option>
+                                <option value="Vocational">Vocational / Certifications</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cust-format">Answer Format</label>
+                            <select id="cust-format" class="form-control" required>
+                                <option value="MCQ">Multiple Choice Questions (MCQ)</option>
+                                <option value="Descriptive">Descriptive Papers / Essays</option>
+                                <option value="Practical">Practical Lab / Coding Examination</option>
+                                <option value="Oral">Oral Presentation / Viva Voce</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="cust-other-group" style="display: none;">
+                        <label for="cust-other">Please Specify Category</label>
+                        <input type="text" id="cust-other" class="form-control" placeholder="e.g. Placement Quiz">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label for="cust-name">Exam Name</label>
+                            <input type="text" id="cust-name" class="form-control" placeholder="e.g., JEE Mains" list="exam-suggestions" required>
+                            <datalist id="exam-suggestions">
+                                <option value="JEE Mains">
+                                <option value="JEE Advanced">
+                                <option value="EAMCET">
+                                <option value="NEET">
+                                <option value="SAT">
+                                <option value="GRE">
+                            </datalist>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cust-subject">Subject Name</label>
+                            <input type="text" id="cust-subject" class="form-control" placeholder="e.g., Physics, Java" required>
+                        </div>
+                    </div>
+                    
+                    <h3 style="border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">Syllabus Content Intake</h3>
+                    
+                    <div class="syllabus-input-tabs">
+                        <div class="tab-btn active" data-tab="bank"><i class="fas fa-database"></i> Syllabus Bank</div>
+                        <div class="tab-btn" data-tab="upload"><i class="fas fa-file-upload"></i> Upload PDF/Image</div>
+                        <div class="tab-btn" data-tab="paste"><i class="fas fa-paste"></i> Paste Text</div>
+                    </div>
+                    
+                    <!-- Syllabus Bank -->
+                    <div class="syllabus-tab-content active" id="tab-bank">
+                        <div class="form-group">
+                            <label for="cust-bank-select">Select syllabus preset</label>
+                            <select id="cust-bank-select" class="form-control">
+                                <option value="">-- Choose Preset --</option>
+                            </select>
+                            <p class="input-hint">Pre-tagged syllabi are calibrated for optimal analysis reliability.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload OCR -->
+                    <div class="syllabus-tab-content" id="tab-upload">
+                        <div class="form-group">
+                            <label>Upload syllabus file or image (OCR will run automatically)</label>
+                            <div class="file-upload-zone" id="file-upload-zone">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <h4>Drag & Drop syllabus file here</h4>
+                                <p>Supports PDF, PNG, JPG, JPEG, BMP (Max size 10MB)</p>
+                                <p style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--primary-pink);">Or click to browse files</p>
+                                <input type="file" id="cust-file-input" class="file-upload-input" accept=".pdf,.png,.jpg,.jpeg,.bmp">
+                            </div>
+                            <div id="upload-success-info" class="upload-success-info"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Paste Syllabus -->
+                    <div class="syllabus-tab-content" id="tab-paste">
+                        <div class="form-group">
+                            <label for="cust-paste">Paste Syllabus Outlines</label>
+                            <textarea id="cust-paste" class="form-control" rows="8" placeholder="1. Topic One&#10;   - Subtopic detail&#10;2. Topic Two..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <h3 style="border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">Timeline & Score Targets</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label for="cust-date">Target Exam Date</label>
+                            <input type="date" id="cust-date" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cust-grade">Baseline Target Grade Percentage (%)</label>
+                            <input type="number" id="cust-grade" class="form-control" placeholder="75" min="30" max="90" required>
+                            <p class="input-hint">Capped at 90% so that derived Plus10% schedules never exceed 100% boundary limits.</p>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem; padding: 1rem;">
+                        <i class="fas fa-magic"></i> Generate Multi-Tier Plans
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

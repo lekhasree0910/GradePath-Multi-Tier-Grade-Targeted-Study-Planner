@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login - GradePath</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.API_BASE_URL = window.API_BASE_URL || 'https://ai.vishnulabs.dev/api';
+    </script>
+    <script src="script.js?v=20260722-1" defer></script>
+</head>
+<body id="page-login-student">
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <i class="fas fa-graduation-cap"></i> GradePath
+        </a>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="courses.html">Courses</a>
+            <a href="customize.html">Customize</a>
+            <a href="vault.html">History</a>
+        </nav>
+        <div id="header-actions" class="header-actions"></div>
+    </header>
+
+    <main class="auth-wrapper">
+        <div class="login-split-container">
+            <!-- Left Side: Dark Blue graphic card containing desk illustration (Image 2 style) -->
+            <div class="login-split-left">
+                <img src="assets/desk_vector.png?v=4" alt="Student Studying Illustration" style="border-radius:12px;">
+                <h3>GradePath Planner</h3>
+                <p>Align schedules to targets dynamically</p>
+            </div>
+            
+            <!-- Right Side: Neumorphic form fields (Image 2 style) -->
+            <div class="login-split-right">
+                <div class="auth-header">
+                    <h2>Student <span class="gradient-text">Portal</span></h2>
+                    <p>Enter details to open your adaptive study vault</p>
+                </div>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" class="neumorphic-input" placeholder="name@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" class="neumorphic-input" placeholder="••••••••" required>
+                    </div>
+                    
+                    <button type="submit" class="neumorphic-btn" style="margin-top: 1rem;">
+                        Sign In <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                </form>
+                
+                <div class="auth-switch">
+                    Don't have an account? <a href="register.html">Sign up</a>
+                    <br><br>
+                    Are you an Administrator? <a href="login_admin.html">Go to Admin Portal</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

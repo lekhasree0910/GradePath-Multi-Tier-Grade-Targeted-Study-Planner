@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Study Plans - GradePath</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.API_BASE_URL = window.API_BASE_URL || 'https://ai.vishnulabs.dev/api';
+    </script>
+    <script src="script.js?v=20260722-1" defer></script>
+</head>
+<body id="page-plan-output">
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <i class="fas fa-graduation-cap"></i> GradePath
+        </a>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="courses.html">Courses</a>
+            <a href="customize.html" class="active">Customize</a>
+            <a href="vault.html">History</a>
+        </nav>
+        <div id="header-actions" class="header-actions"></div>
+    </header>
+
+    <main class="main-content">
+        <div class="page-title-section">
+            <h1>Your Calibrated <span class="gradient-text">Study Regimens</span></h1>
+            <p>We ran a single complexity analysis on your syllabus and calculated three mathematical plans based on your target grade parameters.</p>
+        </div>
+
+        <!-- Tri-tier selection tabs -->
+        <div id="plan-tabs-container" class="plan-tabs">
+            <!-- Populated dynamically by script.js -->
+        </div>
+
+        <!-- Preparation metrics summary -->
+        <div class="plan-info-summary">
+            <div class="glass-card info-box">
+                <h5>Effective Target</h5>
+                <p id="stat-target-grade">75%</p>
+            </div>
+            <div class="glass-card info-box">
+                <h5>Daily Study Budget</h5>
+                <p id="stat-daily-hours">5.0h</p>
+            </div>
+            <div class="glass-card info-box">
+                <h5>Revision Window</h5>
+                <p id="stat-revision-date">Nov 25</p>
+            </div>
+        </div>
+
+        <!-- Adaptive Recompression Control bar -->
+        <div id="pace-adaptive-bar" class="pace-adaptive-bar on-track">
+            <!-- Populated dynamically by script.js (either OnTrack or Behind warning) -->
+        </div>
+
+        <h3 style="margin-top: 3rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem;"><i class="fas fa-calendar-alt"></i> Daily Topic Checklist</h3>
+        
+        <!-- Day-by-Day schedule -->
+        <div id="schedule-days-container" class="schedule-container">
+            <!-- Populated dynamically by script.js -->
+        </div>
+
+        <!-- Incremental Feedback patching box -->
+        <div class="glass-card feedback-section">
+            <h3><i class="fas fa-edit"></i> Request Plan Refinement</h3>
+            <p style="margin-bottom: 1.5rem;">Would you like to adjust your study workload or pace? Your active progress and completions will remain untouched.</p>
+            
+            <div style="display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="feedback-type">Adjustment Category</label>
+                    <select id="feedback-type" class="form-control">
+                        <option value="Workload">Study Workload (Work more/less hours)</option>
+                        <option value="Pace">Velocity (Slow down/speed up topics)</option>
+                        <option value="Other">Custom Notes</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="feedback-comments">Refinement Request Comments</label>
+                    <input type="text" id="feedback-comments" class="form-control" placeholder="e.g. Reduce daily hours, or make schedule more intense on weekends">
+                </div>
+            </div>
+            
+            <button onclick="submitFeedback()" class="btn btn-primary">
+                Apply Incremental Patch <i class="fas fa-tools"></i>
+            </button>
+        </div>
+    </main>
+</body>
+</html>

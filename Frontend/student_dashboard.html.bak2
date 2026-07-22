@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - GradePath</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body id="page-student-dashboard">
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <i class="fas fa-graduation-cap"></i> GradePath
+        </a>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="courses.html">Courses</a>
+            <a href="customize.html">Customize</a>
+            <a href="vault.html">History</a>
+        </nav>
+        <div id="header-actions" class="header-actions">
+        </div>
+        <button id="chatbot-toggle" class="chatbot-toggle" title="Chat with Study Buddy"><i class="fas fa-robot"></i></button>
+    </header>
+    </header>
+
+    <main class="main-content">
+        <div class="page-title-section">
+            <h1>Student <span class="gradient-text">Dashboard</span></h1>
+            <p>Monitor your active prep timeline, check off daily learning goals, and adapt schedules in real-time.</p>
+        </div>
+
+        <div id="dash-active-plan-card" class="glass-card" style="margin-bottom: 2rem; padding: 2.5rem;">
+            <div style="text-align: center; color: var(--text-muted); padding: 3rem 0;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-pink);"></i>
+                <p>Retrieving your active study plan from vault...</p>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+            <!-- Shortcut options -->
+            <div class="glass-card">
+                <h3>Quick Utilities</h3>
+                <p style="margin-bottom: 1.5rem;">Adjust study planner configurations or examine ready-made course pathways.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="customize.html" class="btn btn-secondary" style="flex: 1;"><i class="fas fa-sliders-h"></i> Customize Plan</a>
+                    <a href="courses.html" class="btn btn-secondary" style="flex: 1;"><i class="fas fa-book-open"></i> Readmaps Library</a>
+                </div>
+            </div>
+            
+            <div class="glass-card">
+                <h3>Chronological vault</h3>
+                <p style="margin-bottom: 1.5rem;">Review past prep configurations or access backup sessions inside the vault.</p>
+                <a href="vault.html" class="btn btn-secondary" style="width: 100%;"><i class="fas fa-archive"></i> Open Unified Vault</a>
+            </div>
+        </div>
+    </main>
+
+<!-- Chatbot Modal -->
+<div id="chatbot-modal" class="modal">
+    <div class="glass-card modal-content" style="width: 90%; max-width: 400px;">
+        <div class="modal-header">
+            <h3 id="chatbot-title" style="margin: 0;">Study Buddy</h3>
+            <span class="close-btn" id="chatbot-close">&times;</span>
+        </div>
+        <div id="chatbot-messages" style="height: 300px; overflow-y: auto; padding: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-glass);">
+            <!-- Chat messages will be inserted here -->
+            <div class="message bot-message">
+                <i class="fas fa-robot"></i>
+                <div class="message-text">Hello! I'm your study buddy. How can I help you today?</div>
+            </div>
+        </div>
+        <div class="chat-input-container" style="display: flex; gap: 0.5rem;">
+            <input type="text" id="chatbot-input" placeholder="Type a message..." autocomplete="off" />
+            <button id="chatbot-send" class="btn btn-primary btn-sm">Send</button>
+        </div>
+    </div>
+</div>
+
+<!-- Chatbot Modal -->
+<div id="chatbot-modal" class="modal">
+    <div class="glass-card modal-content" style="width: 90%; max-width: 400px;">
+        <div class="modal-header">
+            <h3 id="chatbot-title" style="margin: 0;">Study Buddy <i class="fas fa-robot"></i></h3>
+            <span class="close-btn" id="chatbot-close">&times;</span>
+        </div>
+        <div id="chatbot-messages" style="flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column;">
+            <!-- Messages will be inserted here -->
+        </div>
+        <div class="chat-input-container" style="display: flex; padding: 1rem; gap: 0.5rem;">
+            <input type="text" id="chatbot-input" placeholder="Ask me about your studies..." />
+            <button id="chatbot-send" class="btn btn-primary">Send</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

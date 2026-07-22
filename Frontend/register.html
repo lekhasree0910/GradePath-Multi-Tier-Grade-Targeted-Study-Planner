@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - GradePath</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.API_BASE_URL = window.API_BASE_URL || 'https://ai.vishnulabs.dev/api';
+    </script>
+    <script src="script.js?v=20260722-1" defer></script>
+    <style>
+        /* Admin request panel: hidden by default */
+        #student-form-section { display: block; }
+        #admin-request-section { display: none; }
+
+        .admin-request-box {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .admin-request-box .admin-icon {
+            font-size: 3.5rem;
+            color: #9f528c;
+            margin-bottom: 1.2rem;
+            display: block;
+            filter: drop-shadow(0 0 10px rgba(159,82,140,0.4));
+        }
+
+        .admin-request-box h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.6rem;
+        }
+
+        .admin-request-box p {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            margin-bottom: 1.8rem;
+            line-height: 1.6;
+        }
+
+        .admin-request-form .form-group { margin-bottom: 1.2rem; }
+
+        .request-sent-msg {
+            background: rgba(159,82,140,0.12);
+            border: 1px solid rgba(159,82,140,0.35);
+            border-radius: 10px;
+            padding: 1rem 1.2rem;
+            color: #d4a0c8;
+            font-size: 0.9rem;
+            display: none;
+            text-align: left;
+            margin-top: 1rem;
+        }
+        .request-sent-msg i { margin-right: 0.4rem; }
+    </style>
+</head>
+<body id="page-register">
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <i class="fas fa-graduation-cap"></i> GradePath
+        </a>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="courses.html">Courses</a>
+            <a href="customize.html">Customize</a>
+            <a href="vault.html">History</a>
+        </nav>
+        <div id="header-actions" class="header-actions"></div>
+    </header>
+
+    <main class="auth-wrapper">
+        <div class="login-split-container">
+
+            <!-- Left: Brand panel -->
+            <div class="login-split-left">
+                <img src="assets/portal_illustration.png?v=4" alt="Students with Study Portal" style="filter: drop-shadow(0 10px 20px rgba(0,0,0,0.25)); border-radius:12px;">
+                <h3 id="left-title">Create Your Account</h3>
+                <p id="left-subtitle">Join thousands of students hitting their grade targets</p>
+            </div>
+
+            <!-- Right: Form panel -->
+            <div class="login-split-right">
+                <div class="auth-header">
+                    <h2>Join <span class="gradient-text">GradePath</span></h2>
+                    <p id="form-tagline">Configure your student credentials to begin planning</p>
+                </div>
+
+                <!-- Role switcher -->
+                <div class="role-switcher" id="role-switcher">
+                    <div class="role-btn active" data-role="Student" id="role-student" onclick="switchRole('Student', this)">
+                        <i class="fas fa-user-graduate"></i> Student
+                    </div>
+                    <div class="role-btn" data-role="Admin" id="role-admin" onclick="switchRole('Admin', this)">
+                        <i class="fas fa-user-shield"></i> Administrator
+                    </div>
+                </div>
+
+                <!-- STUDENT: Registration form -->
+                <div id="student-form-section">
+                    <form id="register-form" novalidate>
+                        <div class="form-group">
+                            <label for="reg-name">Full Name</label>
+                            <input type="text" id="reg-name" class="neumorphic-input" placeholder="Alex Carter" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-email">Email Address</label>
+                            <input type="email" id="reg-email" class="neumorphic-input" placeholder="alex@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-password">Password</label>
+                            <input type="password" id="reg-password" class="neumorphic-input" placeholder="Min 6 characters" required>
+                        </div>
+
+                        <button type="submit" class="neumorphic-btn" id="register-submit-btn" style="margin-top: 1rem;">
+                            <span id="btn-label">Create Account</span> <i class="fas fa-user-plus" id="btn-icon"></i>
+                        </button>
+                    </form>
+
+                    <div class="auth-switch">
+                        Already have an account? <a href="login_student.html">Sign in</a>
+                    </div>
+                </div>
+
+                <!-- ADMIN: Request code panel (no registration allowed) -->
+                <div id="admin-request-section">
+                    <div class="admin-request-box">
+                        <i class="fas fa-shield-halved admin-icon"></i>
+                        <h3>Admin Access is Restricted</h3>
+                        <p>
+                            Administrator accounts are created by the platform owner.<br>
+                            Submit your request below and you will receive an access code via email.
+                        </p>
+
+                        <form class="admin-request-form" id="admin-request-form" novalidate>
+                            <div class="form-group">
+                                <label for="req-name">Full Name</label>
+                                <input type="text" id="req-name" class="neumorphic-input" placeholder="Your full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="req-email">Work Email</label>
+                                <input type="email" id="req-email" class="neumorphic-input" placeholder="admin@institution.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="req-reason">Reason for Admin Access</label>
+                                <input type="text" id="req-reason" class="neumorphic-input" placeholder="e.g. Faculty at XYZ University" required>
+                            </div>
+                            <button type="submit" class="neumorphic-btn">
+                                <i class="fas fa-paper-plane"></i> Send Access Request
+                            </button>
+                        </form>
+
+                        <div class="request-sent-msg" id="request-sent-msg">
+                            <i class="fas fa-check-circle"></i>
+                            Your request has been submitted. You'll receive your access code at the provided email within 24 hours. Once received, login via the <a href="login_admin.html" style="color:#9f528c;">Admin Portal</a>.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Apply saved theme
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+
+        function switchRole(role, el) {
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+
+            const studentSection = document.getElementById('student-form-section');
+            const adminSection = document.getElementById('admin-request-section');
+            const leftTitle = document.getElementById('left-title');
+            const leftSubtitle = document.getElementById('left-subtitle');
+            const tagline = document.getElementById('form-tagline');
+
+            if (role === 'Admin') {
+                studentSection.style.display = 'none';
+                adminSection.style.display = 'block';
+                leftTitle.textContent = 'Admin Access Portal';
+                leftSubtitle.textContent = 'Request your admin access code from the platform owner';
+                tagline.textContent = 'Admin accounts are provisioned by the platform owner';
+            } else {
+                studentSection.style.display = 'block';
+                adminSection.style.display = 'none';
+                leftTitle.textContent = 'Create Your Account';
+                leftSubtitle.textContent = 'Join thousands of students hitting their grade targets';
+                tagline.textContent = 'Configure your student credentials to begin planning';
+            }
+        }
+
+        // Admin request form submission
+        document.getElementById('admin-request-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const full_name = document.getElementById('req-name').value.trim();
+            const email = document.getElementById('req-email').value.trim();
+            const reason = document.getElementById('req-reason').value.trim();
+
+            if (!full_name || !email || !reason) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            const btn = this.querySelector('button[type="submit"]');
+            const origHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending Request...';
+
+            const apiBase = (window.API_BASE_URL || `${window.location.origin}/api`).replace(/\/+$/, '');
+
+            fetch(`${apiBase}/auth/admin-request/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_name, email, reason })
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (res.ok) {
+                    this.style.display = 'none';
+                    document.getElementById('request-sent-msg').style.display = 'block';
+                } else {
+                    alert(data.error || 'Failed to submit request.');
+                    btn.disabled = false;
+                    btn.innerHTML = origHTML;
+                }
+            })
+            .catch(() => {
+                alert('Server connection error. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = origHTML;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ready-Made Roadmaps - GradePath</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.API_BASE_URL = window.API_BASE_URL || 'https://ai.vishnulabs.dev/api';
+    </script>
+    <script src="script.js?v=20260722-1" defer></script>
+</head>
+<body id="page-courses">
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo">
+            <i class="fas fa-graduation-cap"></i> GradePath
+        </a>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="courses.html" class="active">Courses</a>
+            <a href="customize.html">Customize</a>
+            <a href="vault.html">History</a>
+        </nav>
+        <div id="header-actions" class="header-actions"></div>
+    </header>
+
+    <main class="main-content">
+        <div class="page-title-section">
+            <h1>Ready-Made <span class="gradient-text">Roadmaps</span></h1>
+            <p>Select any benchmark curriculum to instantly view structured stage-by-stage learning pathways.</p>
+        </div>
+        
+        <div id="courses-grid" class="courses-grid">
+            <!-- Dynamic course roadmap cards go here -->
+        </div>
+    </main>
+
+    <!-- Modal for viewing a specific roadmap timeline -->
+    <div id="roadmap-modal" class="modal">
+        <div class="glass-card modal-content" style="background: #120d21 !important; color: #ffffff !important;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.15) !important;">
+                <h3 id="modal-title" style="margin: 0; color: #ffffff !important;">Roadmap Timeline</h3>
+                <span class="close-btn" onclick="closeModal()" style="color: #cbd5e1 !important;">&times;</span>
+            </div>
+            <div id="modal-roadmap-body" style="color: #ffffff !important;">
+                <!-- Populated dynamically by script.js -->
+            </div>
+            <div style="text-align: right; margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 1rem;">
+                <button class="btn btn-secondary btn-sm" onclick="closeModal()" style="color: #ffffff !important; background: rgba(255,255,255,0.15) !important; border: 1px solid rgba(255,255,255,0.25) !important;">Close</button>
+                <button class="btn btn-primary btn-sm" onclick="useBaseForCustomPlan()" style="color: #ffffff !important; background: linear-gradient(135deg, #a855f7, #ec4899) !important;">Use as base for Custom Plan</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

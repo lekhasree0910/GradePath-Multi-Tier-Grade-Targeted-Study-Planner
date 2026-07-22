@@ -1,0 +1,1621 @@
+const API_BASE = 'http://127.0.0.1:8000/api';
+
+// ----------------- UTILITY HELPERS -----------------
+function showToast(message, type = 'success') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let iconClass = 'fa-info-circle';
+    if (type === 'success') iconClass = 'fa-check-circle';
+    if (type === 'error') iconClass = 'fa-exclamation-circle';
+    
+    toast.innerHTML = `
+        <i class="fas ${iconClass}"></i>
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s reverse forwards ease-in';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+function getAuthHeaders() {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+    };
+}
+
+function updateNavbar() {
+    const userName = localStorage.getItem("userName");
+    const userRole = localStorage.getItem("userRole");
+    const headerActions = document.getElementById("header-actions");
+    
+    if (!headerActions) return;
+    
+    if (userName && userRole) {
+        const dashboardUrl = userRole === "Admin" ? "admin_dashboard.html" : "student_dashboard.html";
+        headerActions.innerHTML = `
+            <div class="user-tag">
+                <i class="fas fa-user-circle"></i>
+                Hi, <span>${userName}</span> (${userRole})
+            </div>
+            <a href="${dashboardUrl}" class="btn btn-secondary btn-sm">Dashboard</a>
+            <button onclick="handleLogout()" class="btn btn-danger btn-sm">Logout</button>
+        `;
+    } else {
+        headerActions.innerHTML = `
+            <a href="login_student.html" class="btn btn-secondary btn-sm">Student Portal</a>
+            <a href="login_admin.html" class="btn btn-secondary btn-sm">Admin Portal</a>
+            <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
+        `;
+    }
+}
+
+function handleLogout() {
+    fetch(`${API_BASE}/auth/logout/`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+    }).finally(() => {
+        localStorage.clear();
+        showToast("Logged out successfully.");
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+    });
+}
+
+if (localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light-mode');
+}
+
+function injectBackgroundAndTheme() {
+    // 1. Inject theme toggle in navbar
+    const nav = document.querySelector('nav');
+    if (nav && !document.getElementById('theme-toggle')) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.id = 'theme-toggle';
+        toggleBtn.className = 'theme-toggle-btn';
+        toggleBtn.title = 'Toggle Light/Dark Mode';
+        
+        const isLight = localStorage.getItem('theme') === 'light';
+        toggleBtn.innerHTML = isLight ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+        
+        toggleBtn.addEventListener('click', () => {
+            const body = document.body;
+            const currentlyLight = body.classList.toggle('light-mode');
+            localStorage.setItem('theme', currentlyLight ? 'light' : 'dark');
+            toggleBtn.innerHTML = currentlyLight ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+            showToast(`Switched to ${currentlyLight ? 'Light' : 'Dark'} Mode.`);
+        });
+        
+        nav.appendChild(toggleBtn);
+    }
+    
+    // 2. Inject floating skill icons in background
+    let bgContainer = document.querySelector('.bg-blobs');
+    if (bgContainer && !document.querySelector('.skill-floater')) {
+        const floaters = [
+            { icon: 'fab fa-python', class: 'floater-1', title: 'Python' },
+            { icon: 'fab fa-java', class: 'floater-2', title: 'Java' },
+            { icon: 'fas fa-chart-line', class: 'floater-3', title: 'Data Analytics' },
+            { icon: 'fas fa-brain', class: 'floater-4', title: 'Machine Learning' },
+            { icon: 'fas fa-robot', class: 'floater-5', title: 'Artificial Intelligence' },
+            { icon: 'fas fa-shield-alt', class: 'floater-6', title: 'Cybersecurity' },
+            { icon: 'fas fa-microchip', class: 'floater-7', title: 'Operating Systems' }
+        ];
+        
+        floaters.forEach(f => {
+            const el = document.createElement('i');
+            el.className = `${f.icon} skill-floater ${f.class}`;
+            el.title = f.title;
+            bgContainer.appendChild(el);
+        });
+    }
+}
+
+// ----------------- PAGE INITIALIZATION SWITCH -----------------
+function createChatbotElements() {
+    // Create toggle button if not exists
+    if (!document.getElementById('chatbot-toggle')) {
+        const btn = document.createElement('button');
+        btn.id = 'chatbot-toggle';
+        btn.className = 'chatbot-toggle';
+        btn.title = 'Chat with Study Buddy';
+        btn.innerHTML = '<i class="fas fa-robot"></i>';
+        // Position fixed bottom-right
+        btn.style.position = 'fixed';
+        btn.style.bottom = '2rem';
+        btn.style.right = '2rem';
+        btn.style.zIndex = '1000';
+        btn.style.background = 'none';
+        btn.style.border = 'none';
+        btn.style.color = 'var(--primary-pink)';
+        btn.style.fontSize = '1.5rem';
+        btn.style.cursor = 'pointer';
+        btn.style.padding = '0.5rem';
+        btn.style.borderRadius = '50%';
+        btn.style.transition = 'background-color 0.2s';
+        document.body.appendChild(btn);
+    }
+    // Create modal if not exists
+    if (!document.getElementById('chatbot-modal')) {
+        const modal = document.createElement('div');
+        modal.id = 'chatbot-modal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="glass-card modal-content" style="width: 90%; max-width: 400px;">
+                <div class="modal-header">
+                    <h3 id="chatbot-title" style="margin: 0;">Study Buddy</h3>
+                    <span class="close-btn" id="chatbot-close">&times;</span>
+                </div>
+                <div id="chatbot-messages" style="height: 300px; overflow-y: auto; padding: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-glass);">
+                    <!-- Chat messages will be inserted here -->
+                    <div class="message bot-message">
+                        <i class="fas fa-robot"></i>
+                        <div class="message-text">Hello! I'm your study buddy. How can I help you today?</div>
+                    </div>
+                </div>
+                <div class="chat-input-container" style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="chatbot-input" placeholder="Type a message..." autocomplete="off" />
+                    <button id="chatbot-send" class="btn btn-primary btn-sm">Send</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    injectBackgroundAndTheme();
+    updateNavbar();
+    initInteractiveGlassmorphism();
+    
+    const bodyId = document.body.id;
+    
+    if (bodyId === 'page-register') {
+        initRegisterPage();
+    } else if (bodyId === 'page-login-student') {
+        initLoginPage('Student');
+    } else if (bodyId === 'page-login-admin') {
+        initLoginPage('Admin');
+    } else if (bodyId === 'page-courses') {
+        initCoursesPage();
+    } else if (bodyId === 'page-customize') {
+        initCustomizePage();
+    } else if (bodyId === 'page-landing') {
+        initCoursesPage();
+        initCustomizePage();
+    } else if (bodyId === 'page-plan-output') {
+        initPlanOutputPage();
+    } else if (bodyId === 'page-vault') {
+        initVaultPage();
+    } else if (bodyId === 'page-student-dashboard') {
+        initStudentDashboard();
+    } else if (bodyId === 'page-admin-dashboard') {
+        initAdminDashboard();
+    }
+});
+
+// ----------------- REGISTER PAGE -----------------
+function initRegisterPage() {
+    const form = document.getElementById('register-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const full_name = document.getElementById('reg-name').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const password = document.getElementById('reg-password').value;
+
+        if (!full_name || !email || !password) {
+            showToast("Please fill in all required fields.", "error");
+            return;
+        }
+
+        if (password.length < 6) {
+            showToast("Password must be at least 6 characters.", "error");
+            return;
+        }
+
+    createChatbotElements();
+        const payload = { full_name, email, password, role: 'Student' };
+        
+        fetch(`${API_BASE}/auth/register/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (res.ok) {
+                showToast("Account created! Redirecting to login...", "success");
+                setTimeout(() => {
+                    window.location.href = 'login_student.html';
+                }, 1500);
+            } else {
+                showToast(data.error || "Registration failed.", "error");
+            }
+        })
+        .catch(() => showToast("Server error. Please check that the backend is running.", "error"));
+    });
+}
+
+// Role switcher is handled inline in register.html
+window.setRegisterRole = function(role, btnElement) {
+    document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+    btnElement.classList.add('active');
+};
+
+// ----------------- LOGIN PAGES -----------------
+function initLoginPage(role) {
+    const form = document.getElementById('login-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        
+        fetch(`${API_BASE}/auth/login/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, role })
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (res.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userId', data.user_id);
+                localStorage.setItem('userName', data.full_name);
+                localStorage.setItem('userRole', data.role);
+                
+                showToast(`Welcome back, ${data.full_name}!`, "success");
+                setTimeout(() => {
+                    window.location.href = data.role === 'Admin' ? 'admin_dashboard.html' : 'student_dashboard.html';
+                }, 1200);
+            } else {
+                showToast(data.error || "Login failed.", "error");
+            }
+        })
+        .catch(() => showToast("Connection failed.", "error"));
+    });
+}
+
+// ----------------- ROADMAP COURSES PAGE -----------------
+function initCoursesPage() {
+    const grid = document.getElementById('courses-grid');
+    if (!grid) return;
+    
+    grid.innerHTML = '<div class="spinner"></div>';
+    
+    fetch(`${API_BASE}/courses/`)
+    .then(res => res.json())
+    .then(courses => {
+        grid.innerHTML = '';
+        if (courses.length === 0) {
+            grid.innerHTML = '<p>No roadmaps available.</p>';
+            return;
+        }
+        
+        const isLanding = document.body.id === 'page-landing';
+        
+        courses.forEach(c => {
+            const card = document.createElement('div');
+            if (isLanding) {
+                card.className = 'course-scroll-card';
+                card.innerHTML = `
+                    <div class="course-scroll-details">
+                        <div class="course-scroll-category">${c.category}</div>
+                        <h3>${c.course_name}</h3>
+                        <p>${c.description}</p>
+                    </div>
+                    <div class="course-scroll-meta">
+                        <span class="course-scroll-stages"><i class="fas fa-layer-group"></i> ${c.stage_count} Stages</span>
+                        <button class="btn btn-secondary btn-sm" onclick="viewRoadmapModal(${c.course_id})">View Roadmap</button>
+                    </div>
+                `;
+            } else {
+                card.className = 'glass-card course-card';
+                card.innerHTML = `
+                    <div class="course-category">${c.category}</div>
+                    <h3>${c.course_name}</h3>
+                    <p>${c.description}</p>
+                    <div class="course-meta">
+                        <span><i class="fas fa-layer-group"></i>${c.stage_count} Stages</span>
+                        <button class="btn btn-secondary btn-sm" onclick="viewRoadmapModal(${c.course_id})">View Roadmap</button>
+                    </div>
+                `;
+            }
+            grid.appendChild(card);
+        });
+    })
+    .catch(() => {
+        grid.innerHTML = '<p>Error loading roadmaps.</p>';
+    });
+}
+
+window.viewRoadmapModal = function(courseId) {
+    const modal = document.getElementById('roadmap-modal');
+    const modalBody = document.getElementById('modal-roadmap-body');
+    if (!modal || !modalBody) return;
+    
+    window.selectedCourseId = courseId;
+    modalBody.innerHTML = '<div class="spinner"></div>';
+    modal.style.display = 'flex';
+    
+    fetch(`${API_BASE}/courses/${courseId}/`)
+    .then(res => res.json())
+    .then(c => {
+        let timelineHtml = `
+            <h2>${c.course_name} Roadmap</h2>
+            <p style="margin-bottom: 1.5rem;">${c.description}</p>
+            <div class="roadmap-timeline">
+        `;
+        
+        c.stages.forEach(stage => {
+            timelineHtml += `
+                <div class="timeline-stage">
+                    <div class="stage-num">Stage ${stage.stage_number}</div>
+                    <div class="stage-title">${stage.title}</div>
+                    <div class="stage-topics">
+                        ${stage.topics.map(t => `<span class="stage-tag">${t}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        
+        timelineHtml += '</div>';
+        modalBody.innerHTML = timelineHtml;
+    })
+    .catch(() => {
+        modalBody.innerHTML = '<p>Error loading roadmap details.</p>';
+    });
+};
+
+window.closeModal = function() {
+    const modal = document.getElementById('roadmap-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+// ----------------- CUSTOMIZE FORM PIPELINE PAGE -----------------
+let selectedSyllabusBankText = '';
+
+function initCustomizePage() {
+    if (!localStorage.getItem('token') && document.body.id !== 'page-landing') {
+        showToast("Please log in to customize plans.", "error");
+        window.location.href = 'login_student.html';
+        return;
+    }
+    
+    const form = document.getElementById('customize-form');
+    if (!form) return;
+    
+    // Category conditional trigger
+    const categorySelect = document.getElementById('cust-category');
+    const otherGroup = document.getElementById('cust-other-group');
+    categorySelect.addEventListener('change', () => {
+        if (categorySelect.value === 'Other') {
+            otherGroup.style.display = 'block';
+            document.getElementById('cust-other').setAttribute('required', 'true');
+        } else {
+            otherGroup.style.display = 'none';
+            document.getElementById('cust-other').removeAttribute('required');
+        }
+    });
+    
+    // Syllabus tab switcher
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.syllabus-tab-content').forEach(c => c.classList.remove('active'));
+            
+            btn.classList.add('active');
+            const targetId = btn.dataset.tab;
+            document.getElementById(`tab-${targetId}`).classList.add('active');
+        });
+    });
+    
+    // 1. Bank: Load preset list
+    const bankSelect = document.getElementById('cust-bank-select');
+    fetch(`${API_BASE}/syllabus-bank/`)
+    .then(res => res.json())
+    .then(bank => {
+        bank.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.id;
+            opt.textContent = item.name;
+            opt.dataset.text = item.text;
+            bankSelect.appendChild(opt);
+        });
+    });
+    
+    bankSelect.addEventListener('change', () => {
+        const selected = bankSelect.options[bankSelect.selectedIndex];
+        selectedSyllabusBankText = selected.dataset.text || '';
+    });
+    
+    // 2. Upload: File selection and Drag/Drop
+    const dropzone = document.getElementById('file-upload-zone');
+    const fileInput = document.getElementById('cust-file-input');
+    const uploadInfo = document.getElementById('upload-success-info');
+    
+    dropzone.addEventListener('click', () => fileInput.click());
+    
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            handleFileUpload(fileInput.files[0], uploadInfo);
+        }
+    });
+    
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            handleFileUpload(fileInput.files[0], uploadInfo);
+        }
+    });
+    
+    // Form submit
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        if (!localStorage.getItem('token')) {
+            showToast("Please log in to customize plans.", "error");
+            setTimeout(() => {
+                window.location.href = 'login_student.html';
+            }, 1200);
+            return;
+        }
+        
+        let syllabus_text = '';
+        const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+        
+        if (activeTab === 'bank') {
+            if (!selectedSyllabusBankText) {
+                showToast("Please select a syllabus from the bank.", "error");
+                return;
+            }
+            syllabus_text = selectedSyllabusBankText;
+        } else if (activeTab === 'upload') {
+            syllabus_text = form.dataset.uploadedText || '';
+            if (!syllabus_text) {
+                showToast("Please upload a syllabus file first.", "error");
+                return;
+            }
+        } else {
+            // Paste
+            syllabus_text = document.getElementById('cust-paste').value;
+            if (!syllabus_text.trim()) {
+                showToast("Syllabus text cannot be empty.", "error");
+                return;
+            }
+        }
+        
+        const payload = {
+            exam_category: categorySelect.value,
+            answer_format: document.getElementById('cust-format').value,
+            exam_name: document.getElementById('cust-name').value,
+            category_other: document.getElementById('cust-other').value,
+            subject_name: document.getElementById('cust-subject').value,
+            syllabus_source: activeTab.charAt(0).toUpperCase() + activeTab.slice(1),
+            syllabus_text: syllabus_text,
+            exam_date: document.getElementById('cust-date').value,
+            target_grade_percent: parseFloat(document.getElementById('cust-grade').value)
+        };
+        
+        // Show loader spinner on button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const origText = submitBtn.innerHTML;
+        submitBtn.setAttribute('disabled', 'true');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scoring Syllabus & Structuring Plans...';
+        
+        fetch(`${API_BASE}/plans/customize/`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (res.ok) {
+                showToast("Plans derived successfully!", "success");
+                // Save locally to display immediately on plan output page
+                localStorage.setItem('latestPlans', JSON.stringify(data.plans));
+                localStorage.setItem('latestRequestId', data.request_id);
+                localStorage.setItem('latestActivePlanId', data.active_plan_id);
+                localStorage.setItem('latestVaultId', data.vault_id);
+                
+                setTimeout(() => {
+                    window.location.href = 'plan_output.html';
+                }, 1000);
+            } else {
+                showToast(data.error || "Plan generation failed.", "error");
+                submitBtn.removeAttribute('disabled');
+                submitBtn.innerHTML = origText;
+            }
+        })
+        .catch(() => {
+            showToast("Server connection error.", "error");
+            submitBtn.removeAttribute('disabled');
+            submitBtn.innerHTML = origText;
+        });
+    });
+}
+
+function handleFileUpload(file, infoElement) {
+    const formData = new FormData();
+    formData.append('syllabus_file', file);
+    formData.append('token', localStorage.getItem('token'));
+    
+    infoElement.style.display = 'block';
+    infoElement.className = 'upload-success-info';
+    infoElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running OCR text extraction...';
+    
+    fetch(`${API_BASE}/syllabus/upload/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(async res => {
+        const data = await res.json();
+        if (res.ok) {
+            infoElement.innerHTML = `<i class="fas fa-check-circle"></i> File uploaded successfully: <strong>${data.filename}</strong>`;
+            document.getElementById('customize-form').dataset.uploadedText = data.extracted_text;
+            showToast("OCR complete! Syllabus parsed.");
+        } else {
+            infoElement.className = 'upload-success-info error';
+            infoElement.innerHTML = `<i class="fas fa-exclamation-triangle"></i> OCR extraction failed: ${data.error}`;
+        }
+    })
+    .catch(() => {
+        infoElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Network upload error.';
+    });
+}
+
+// ----------------- PLANS OUTPUT PAGE -----------------
+let activePlanData = null; // Store currently viewed tier plan
+let currentPace = 'OnTrack';
+
+function initPlanOutputPage() {
+    const plansStr = localStorage.getItem('latestPlans');
+    if (!plansStr) {
+        showToast("No active plan loaded. Redirecting...", "error");
+        window.location.href = 'student_dashboard.html';
+        return;
+    }
+    
+    const plans = JSON.parse(plansStr);
+    renderPlanTiers(plans);
+}
+
+function renderPlanTiers(plans) {
+    const tabsContainer = document.getElementById('plan-tabs-container');
+    if (!tabsContainer) return;
+    
+    tabsContainer.innerHTML = '';
+    
+    plans.forEach((p, idx) => {
+        const tabBtn = document.createElement('div');
+        tabBtn.className = `plan-tab-btn ${p.plan_id == localStorage.getItem('latestActivePlanId') || idx === 1 ? 'active' : ''}`;
+        
+        let recom = '';
+        if (p.tier === 'Plus5') recom = ' (Recommended)';
+        
+        tabBtn.innerHTML = `
+            ${p.tier} Plan${recom}
+            <span class="tier-tag">Target: ${p.target_grade_effective}% Grade</span>
+        `;
+        
+        tabBtn.addEventListener('click', () => {
+            document.querySelectorAll('.plan-tab-btn').forEach(b => b.classList.remove('active'));
+            tabBtn.classList.add('active');
+            displayPlanDetails(p);
+        });
+        
+        tabsContainer.appendChild(tabBtn);
+        
+        // Show default active
+        if (p.plan_id == localStorage.getItem('latestActivePlanId') || idx === 1) {
+            displayPlanDetails(p);
+        }
+    });
+}
+
+function displayPlanDetails(plan) {
+    activePlanData = plan;
+    localStorage.setItem('latestActivePlanId', plan.plan_id);
+    
+    // Fill metrics
+    document.getElementById('stat-target-grade').textContent = `${plan.target_grade_effective}%`;
+    document.getElementById('stat-daily-hours').textContent = `${plan.daily_schedule[0]?.study_hours || 4}h`;
+    document.getElementById('stat-revision-date').textContent = new Date(plan.revision_start_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+    
+    // Fetch progress checked items
+    fetchProgress(plan.plan_id);
+}
+
+function fetchProgress(planId) {
+    fetch(`${API_BASE}/plans/${planId}/progress/`, {
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(data => {
+        currentPace = data.pace_status;
+        renderPaceAdaptiveBar(data.pace_status);
+        renderScheduleDays(activePlanData.daily_schedule, data.progress);
+    });
+}
+
+function renderPaceAdaptiveBar(pace) {
+    const bar = document.getElementById('pace-adaptive-bar');
+    if (!bar) return;
+    
+    if (pace === 'Behind') {
+        bar.className = 'pace-adaptive-bar';
+        bar.innerHTML = `
+            <div class="pace-info">
+                <i class="fas fa-exclamation-triangle pace-icon"></i>
+                <div class="pace-text">
+                    <h4>Pace Alert: Behind Schedule</h4>
+                    <p>You have fallen behind on some syllabus tasks. We recommend recompressing the schedule to dynamically adjust the remaining load.</p>
+                </div>
+            </div>
+            <button onclick="triggerRecompression()" class="btn btn-primary btn-sm"><i class="fas fa-compress-arrows-alt"></i> Recompress Plan</button>
+        `;
+    } else {
+        bar.className = 'pace-adaptive-bar on-track';
+        bar.innerHTML = `
+            <div class="pace-info">
+                <i class="fas fa-check-circle pace-icon"></i>
+                <div class="pace-text">
+                    <h4>Pace Status: On Track / Ahead</h4>
+                    <p>Good job! You are meeting your daily goals. Keep going to protect your final revision buffer zone.</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+window.triggerRecompression = function() {
+    const planId = localStorage.getItem('latestActivePlanId');
+    
+    fetch(`${API_BASE}/plans/${planId}/recompress/`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast("Adaptive Schedule recompressed! Buffer safe.");
+            activePlanData.daily_schedule = data.daily_schedule;
+            
+            // Re-render
+            fetchProgress(planId);
+        } else {
+            showToast("Recompression error.", "error");
+        }
+    });
+};
+
+function renderScheduleDays(days, progressList) {
+    const container = document.getElementById('schedule-days-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const completedSet = new Set(progressList.filter(p => p.status === 'Completed').map(p => p.topic_id));
+    
+    days.forEach(day => {
+        const dayCard = document.createElement('div');
+        dayCard.className = `glass-card schedule-day-card ${day.is_revision ? 'revision-day' : ''}`;
+        
+        let badges = '';
+        if (day.is_revision) badges = '<span class="revision-badge">Revision Zone</span>';
+        
+        let topicsHtml = '';
+        day.topics.forEach(topic => {
+            const isCompleted = completedSet.has(topic.topic_id);
+            
+            // Build complexity dots
+            let dots = '';
+            for(let i=1; i<=5; i++) {
+                dots += `<div class="complexity-dot ${i <= topic.complexity ? 'filled' : ''}"></div>`;
+            }
+            
+            topicsHtml += `
+                <div class="topic-item">
+                    <div class="topic-meta-header">
+                        <span class="topic-name">${topic.topic_name}</span>
+                        <div class="complexity-indicator" title="Complexity Weight: ${topic.complexity}/5">
+                            ${dots}
+                        </div>
+                    </div>
+                    ${topic.subtopics && topic.subtopics.length ? `
+                    <ul class="subtopics-list">
+                        ${topic.subtopics.map(sub => `<li>${sub}</li>`).join('')}
+                    </ul>` : ''}
+                    
+                    <ul class="tasks-checklist">
+                        ${topic.tasks ? topic.tasks.map((task, tIdx) => {
+                            const uniqueTaskId = `${topic.topic_id}_t${tIdx}`;
+                            // Use checked class if the entire topic completed, or mock tasks completion
+                            return `
+                                <li class="task-checkbox-item ${isCompleted ? 'checked' : ''}" onclick="toggleTaskCompletion('${topic.topic_id}', this)">
+                                    <input type="checkbox" ${isCompleted ? 'checked' : ''} disabled />
+                                    <span>${task}</span>
+                                </li>
+                            `;
+                        }).join('') : ''}
+                    </ul>
+                </div>
+            `;
+        });
+        
+        dayCard.innerHTML = `
+            <div class="day-header">
+                <span class="day-title">Day ${day.day_number} ${badges}</span>
+                <span class="day-date">${new Date(day.date).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})} (${day.study_hours}h session)</span>
+            </div>
+            <div class="day-body">
+                ${topicsHtml}
+            </div>
+        `;
+        
+        container.appendChild(dayCard);
+    });
+}
+
+window.toggleTaskCompletion = function(topicId, element) {
+    const isCurrentlyChecked = element.classList.contains('checked');
+    const newStatus = isCurrentlyChecked ? 'Pending' : 'Completed';
+    const planId = localStorage.getItem('latestActivePlanId');
+    
+    // Toggle UI element instantly
+    if (isCurrentlyChecked) {
+        element.classList.remove('checked');
+        element.querySelector('input[type="checkbox"]').checked = false;
+    } else {
+        element.classList.add('checked');
+        element.querySelector('input[type="checkbox"]').checked = true;
+    }
+    
+    // Post status update
+    fetch(`${API_BASE}/plans/${planId}/progress/`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+            topic_id: topicId,
+            status: newStatus
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Update pace status
+            currentPace = data.pace_status;
+            renderPaceAdaptiveBar(data.pace_status);
+        }
+    });
+};
+
+// Handle incremental feedback patches
+window.submitFeedback = function() {
+    const txt = document.getElementById('feedback-comments').value;
+    const type = document.getElementById('feedback-type').value;
+    const planId = localStorage.getItem('latestActivePlanId');
+    
+    if (!txt.trim()) {
+        showToast("Please enter feedback notes first.", "error");
+        return;
+    }
+    
+    fetch(`${API_BASE}/plans/${planId}/feedback/`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+            feedback_text: txt,
+            adjustment_type: type
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast("Feedback patch applied! Schedule adjusted.");
+            document.getElementById('feedback-comments').value = '';
+            
+            // Update plan schedule in memory
+            activePlanData.daily_schedule = data.daily_schedule;
+            
+            // Re-render schedule
+            fetchProgress(planId);
+        }
+    });
+};
+
+// ----------------- PLAN VAULT (HISTORY & ACTIVE) -----------------
+function initVaultPage() {
+    const studentId = localStorage.getItem('userId');
+    if (!studentId) {
+        window.location.href = 'login_student.html';
+        return;
+    }
+    
+    fetchVaultSessions(studentId);
+}
+
+function fetchVaultSessions(studentId) {
+    const listContainer = document.getElementById('vault-sessions-container');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '<div class="spinner"></div>';
+    
+    fetch(`${API_BASE}/vault/${studentId}/`, {
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(sessions => {
+        listContainer.innerHTML = '';
+        if (sessions.length === 0) {
+            listContainer.innerHTML = '<p>Your vault history is empty.</p>';
+            return;
+        }
+        
+        sessions.forEach(sess => {
+            const card = document.createElement('div');
+            card.className = `vault-session-card ${sess.is_active ? 'active' : ''}`;
+            card.innerHTML = `
+                <div class="session-card-header">
+                    <span class="session-title">${sess.session_summary}</span>
+                    <span class="session-date">${new Date(sess.timestamp).toLocaleDateString()}</span>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.vault-session-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                viewVaultSessionChat(sess);
+            });
+            
+            listContainer.appendChild(card);
+            
+            // Render first session as active chat by default
+            if (sess.is_active) {
+                viewVaultSessionChat(sess);
+            }
+        });
+    });
+}
+
+function viewVaultSessionChat(sess) {
+    const header = document.getElementById('chat-header-title');
+    const body = document.getElementById('chat-body-container');
+    const actions = document.getElementById('chat-actions-container');
+    
+    if (!header || !body || !actions) return;
+    
+    header.innerHTML = `${sess.session_summary}`;
+    
+    // Simulate chat logs representing vault state changes
+    body.innerHTML = `
+        <div class="chat-bubble bot">
+            Hello! I processed the syllabus complexity weights for your custom plan target of <strong>${sess.plan_details?.target_grade_effective}%</strong>. I derived three mathematical tiers for you.
+            <div class="chat-bubble-meta">${new Date(sess.timestamp).toLocaleTimeString()}</div>
+        </div>
+        <div class="chat-bubble user">
+            Generate and save schedule as active.
+            <div class="chat-bubble-meta">${new Date(sess.timestamp).toLocaleTimeString()}</div>
+        </div>
+        <div class="chat-bubble bot">
+            Plan initialized. Your revision buffer starts on <strong>${new Date(sess.plan_details?.revision_start_date).toLocaleDateString()}</strong>. Track your progress daily in the Student Dashboard!
+            <div class="chat-bubble-meta">${new Date(sess.timestamp).toLocaleTimeString()}</div>
+        </div>
+    `;
+    
+    // Configure reopen / delete action buttons
+    actions.innerHTML = `
+        <button onclick="reopenVaultPlan(${sess.vault_id})" class="btn btn-primary"><i class="fas fa-folder-open"></i> Reopen & Set Active</button>
+        <button onclick="deleteVaultPlan(${sess.vault_id})" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Delete Session</button>
+    `;
+}
+
+window.reopenVaultPlan = function(vaultId) {
+    fetch(`${API_BASE}/vault/session/${vaultId}/reopen/`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast("Plan re-activated!");
+            // Update active plan in memory and redirect
+            localStorage.setItem('latestActivePlanId', data.active_plan_id);
+            
+            // Fetch the plan details and store in latestPlans
+            fetch(`${API_BASE}/plans/${data.active_plan_id}/`, {
+                headers: getAuthHeaders()
+            })
+            .then(res => res.json())
+            .then(planDoc => {
+                // Fetch brother plans
+                fetch(`${API_BASE}/plans/request/${planDoc.request_id}/`, {
+                    headers: getAuthHeaders()
+                })
+                .then(res => res.json())
+                .then(siblings => {
+                    const mapped = siblings.map(s => ({
+                        plan_id: s.plan_id,
+                        tier: s.tier,
+                        target_grade_effective: s.target_grade_effective,
+                        revision_start_date: s.revision_start_date,
+                        daily_schedule: s.daily_schedule_json
+                    }));
+                    localStorage.setItem('latestPlans', JSON.stringify(mapped));
+                    window.location.href = 'student_dashboard.html';
+                });
+            });
+        }
+    });
+};
+
+window.deleteVaultPlan = function(vaultId) {
+    if(!confirm("Are you sure you want to delete this study plan session from your vault?")) return;
+    
+    fetch(`${API_BASE}/vault/session/${vaultId}/`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast("Session removed.");
+            location.reload();
+        }
+    });
+};
+
+// ----------------- STUDENT DASHBOARD -----------------
+function initStudentDashboard() {
+    const studentId = localStorage.getItem('userId');
+    if (!studentId) {
+        window.location.href = 'login_student.html';
+        return;
+    }
+    
+    // Fetch vault sessions to check if there is an active plan
+    fetch(`${API_BASE}/vault/${studentId}/`, {
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(vaults => {
+        const activeVault = vaults.find(v => v.is_active);
+        const card = document.getElementById('dash-active-plan-card');
+        
+        if (!card) return;
+        
+        if (!activeVault) {
+            card.innerHTML = `
+                <h3>No Active Plan</h3>
+                <p>You haven't generated or activated a study plan yet.</p>
+                <a href="customize.html" class="btn btn-primary" style="margin-top: 1.5rem;">Create Custom Plan</a>
+            `;
+            return;
+        }
+        
+        const planId = activeVault.plan_id;
+        
+        // Fetch active plan
+        fetch(`${API_BASE}/plans/${planId}/`, {
+            headers: getAuthHeaders()
+        })
+        .then(res => res.json())
+        .then(plan => {
+            // Count upcoming days
+            const examReq = vaults.find(v => v.vault_id === activeVault.vault_id);
+            // Get exam details
+            fetch(`${API_BASE}/plans/${planId}/progress/`, {
+                headers: getAuthHeaders()
+            })
+            .then(res => res.json())
+            .then(prog => {
+                const totalDays = plan.daily_schedule_json.length;
+                const completedCount = prog.progress.filter(p => p.status === 'Completed').length;
+                
+                // Find exam date
+                const lastDay = plan.daily_schedule_json[plan.daily_schedule_json.length - 1];
+                const examDate = new Date(lastDay.date);
+                const today = new Date();
+                const daysLeft = Math.max(0, Math.ceil((examDate - today) / (1000 * 60 * 60 * 24)));
+                
+                card.innerHTML = `
+                    <h3>${activeVault.session_summary}</h3>
+                    <p style="margin: 0.5rem 0 1.5rem 0;">Active Tier: <strong style="color: var(--primary-pink);">${plan.tier}</strong></p>
+                    
+                    <div class="dashboard-stat-row">
+                        <div class="glass-card dashboard-stat-card">
+                            <i class="fas fa-hourglass-half"></i>
+                            <h5>Exam Countdown</h5>
+                            <p>${daysLeft} Days</p>
+                        </div>
+                        <div class="glass-card dashboard-stat-card">
+                            <i class="fas fa-check-double"></i>
+                            <h5>Topics Completed</h5>
+                            <p>${completedCount}</p>
+                        </div>
+                        <div class="glass-card dashboard-stat-card">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <h5>Current Pace</h5>
+                            <p style="color: ${prog.pace_status === 'Behind' ? 'var(--text-main)' : 'var(--primary-pink)'};">${prog.pace_status}</p>
+                        </div>
+                    </div>
+                    
+                    <a href="plan_output.html" class="btn btn-primary"><i class="fas fa-external-link-alt"></i> Open Study Plan Tasks</a>
+                `;
+            });
+        });
+    });
+}
+
+// ----------------- ADMIN DASHBOARD -----------------
+function initAdminDashboard() {
+    if (localStorage.getItem('userRole') !== 'Admin') {
+        window.location.href = 'login_admin.html';
+        return;
+    }
+    
+    // 1. Fetch metrics
+    fetch(`${API_BASE}/admin/analytics/usage/`, {
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(metrics => {
+        document.getElementById('admin-stat-students').textContent = metrics.total_students;
+        document.getElementById('admin-stat-plans').textContent = metrics.total_plans_generated;
+        document.getElementById('admin-stat-active').textContent = metrics.active_plans_count;
+    });
+    
+    // 2. Fetch difficulty trends
+    fetch(`${API_BASE}/admin/analytics/difficulty-trends/`, {
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(trends => {
+        const container = document.getElementById('admin-difficulty-chart');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        if (trends.length === 0) {
+            container.innerHTML = '<p>No data samples yet.</p>';
+            return;
+        }
+        
+        trends.forEach(item => {
+            const barWrapper = document.createElement('div');
+            barWrapper.className = 'chart-bar-wrapper';
+            
+            // Score ranges 1-5, convert to percentage for heights
+            const pctHeight = (item.avg_complexity / 5.0) * 100;
+            
+            barWrapper.innerHTML = `
+                <div class="chart-bar" style="height: ${pctHeight}%;">
+                    <div class="chart-bar-value">${item.avg_complexity}</div>
+                </div>
+                <div class="chart-label" title="${item.subject}">${item.subject}</div>
+            `;
+            container.appendChild(barWrapper);
+        });
+    });
+    
+    // 3. Fetch students list
+    fetch(`${API_BASE}/admin/students/`, {
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(students => {
+        const body = document.getElementById('admin-students-table-body');
+        if (!body) return;
+        
+        body.innerHTML = '';
+        if (students.length === 0) {
+            body.innerHTML = '<tr><td colspan="4">No students registered yet.</td></tr>';
+            return;
+        }
+        
+        students.forEach(st => {
+            const tr = document.createElement('tr');
+            
+            let paceBadge = `<span class="status-badge on-track">On Track</span>`;
+            if (st.pace_status === 'Behind') {
+                paceBadge = `<span class="status-badge behind">Behind</span>`;
+            } else if (st.pace_status === 'Ahead') {
+                paceBadge = `<span class="status-badge ahead">Ahead</span>`;
+            } else if (st.pace_status === 'No Active Plan') {
+                paceBadge = `<span class="status-badge" style="background: rgba(255,255,255,0.05); color: #fff;">Inactive</span>`;
+            }
+            
+            tr.innerHTML = `
+                <td><strong>${st.full_name}</strong><br><small style="color: var(--text-muted);">${st.email}</small></td>
+                <td>${st.active_plan_summary}</td>
+                <td>${paceBadge}</td>
+                <td>${new Date(st.created_at).toLocaleDateString()}</td>
+            `;
+            body.appendChild(tr);
+        });
+    });
+
+    // 4. Fetch admin requests list
+    loadAdminRequests();
+    
+    // Create Course form submit
+    const courseForm = document.getElementById('admin-course-form');
+    if (courseForm) {
+        courseForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const course_name = document.getElementById('c-name').value;
+            const category = document.getElementById('c-category').value;
+            const description = document.getElementById('c-desc').value;
+            
+            // Hardcode 5 dummy stages for demo simplicity
+            const stages = [
+                {"stage_number": 1, "title": "Introduction Phase", "topics": ["Basic concepts", "Syntax definitions"]},
+                {"stage_number": 2, "title": "Core Foundations", "topics": ["Control flows", "Data management"]},
+                {"stage_number": 3, "title": "Application Design", "topics": ["Standard protocols", "Functional integrations"]},
+                {"stage_number": 4, "title": "Advanced Implementations", "topics": ["Error management", "Optimization rules"]},
+                {"stage_number": 5, "title": "Final Review & Projects", "topics": ["Mock assessments", "Review files"]}
+            ];
+            
+            fetch(`${API_BASE}/courses/`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ course_name, category, description, stages })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast("New roadmap course published!");
+                    courseForm.reset();
+                    initAdminDashboard(); // Refresh metrics
+                } else {
+                    showToast("Error creating roadmap.", "error");
+                }
+            });
+        });
+    }
+}
+
+// ----------------- ADMIN ACCESS CODE REQUEST MANAGEMENT -----------------
+function loadAdminRequests() {
+    const tableBody = document.getElementById('admin-requests-table-body');
+    if (!tableBody) return;
+
+    fetch(`${API_BASE}/admin/requests/`, {
+        headers: getAuthHeaders()
+    })
+    .then(res => res.json())
+    .then(requests => {
+        tableBody.innerHTML = '';
+        if (requests.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); font-size: 0.95rem;">No access requests found.</td></tr>';
+            return;
+        }
+
+        requests.forEach(req => {
+            const tr = document.createElement('tr');
+            
+            let statusBadge = '';
+            if (req.status === 'Pending') {
+                statusBadge = '<span class="status-badge" style="background: rgba(159,82,140,0.15); color: var(--primary-pink); border: 1px solid var(--primary-pink);">Pending</span>';
+            } else if (req.status === 'Approved') {
+                statusBadge = '<span class="status-badge" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.2);">Approved</span>';
+            } else {
+                statusBadge = '<span class="status-badge" style="background: rgba(0,0,0,0.3); color: var(--text-muted); border: 1px solid var(--border-glass);">Rejected</span>';
+            }
+
+            let actionsHtml = '';
+            if (req.status === 'Pending') {
+                actionsHtml = `
+                    <button class="btn btn-primary btn-sm" onclick="handleAdminRequestAction(${req.request_id}, 'Approve')">Approve</button>
+                    <button class="btn btn-secondary btn-sm" onclick="handleAdminRequestAction(${req.request_id}, 'Reject')">Reject</button>
+                `;
+            } else {
+                actionsHtml = '<span style="color: var(--text-muted); font-size: 0.85rem;">None</span>';
+            }
+
+            const codeDisplay = req.access_code ? `<code style="background: rgba(255,255,255,0.08); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--primary-pink);">${req.access_code}</code>` : '<span style="color: var(--text-muted);">-</span>';
+
+            tr.innerHTML = `
+                <td><strong>${req.full_name}</strong></td>
+                <td><small>${req.email}</small></td>
+                <td>${req.reason}</td>
+                <td>${statusBadge}</td>
+                <td>${codeDisplay}</td>
+                <td><div style="display:flex; gap:0.5rem;">${actionsHtml}</div></td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    })
+    .catch(() => {
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); font-size: 0.95rem;">Error loading requests.</td></tr>';
+    });
+}
+
+window.handleAdminRequestAction = function(requestId, action) {
+    if (!confirm(`Are you sure you want to ${action.toLowerCase()} this request?`)) return;
+
+    fetch(`${API_BASE}/admin/requests/${requestId}/action/`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Request successfully ${action.toLowerCase()}d.`);
+            loadAdminRequests();
+        } else {
+            showToast(data.error || "Action failed.", "error");
+        }
+    })
+    .catch(() => showToast("Connection error.", "error"));
+};
+
+// ----------------- INTERACTIVE GLASSMORPHISM TILT EFFECT -----------------
+function initInteractiveGlassmorphism() {
+    const card = document.querySelector('.login-split-container');
+    if (!card) return;
+
+    // Check if touch device
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        return; // Skip tilt on touch devices for smoother performance
+    }
+
+    card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Calculate tilt rotation: tilt range from -8 to +8 degrees
+        const tiltX = ((y / rect.height) - 0.5) * -8;
+        const tiltY = ((x / rect.width) - 0.5) * 8;
+        
+        card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-4px)`;
+        
+        // Dynamic border glow highlight direction based on cursor
+        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-pink').trim() || '#9f528c';
+        card.style.boxShadow = `${-tiltY * 1.5}px ${tiltX * 1.5}px 35px rgba(159, 82, 140, 0.2), 0 25px 60px rgba(0, 0, 0, 0.4)`;
+        card.style.borderColor = `rgba(159, 82, 140, 0.45)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+        card.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.35)';
+        card.style.borderColor = 'var(--border-glass)';
+    });
+}
+
+
+// Use selected course as base for custom plan
+function useBaseForCustomPlan() {
+    const courseId = window.selectedCourseId;
+    if (!courseId) {
+        alert('No course selected. Please open a roadmap first.');
+        return;
+    }
+    // Store in localStorage so customize page can read it
+    localStorage.setItem('baseCourseId', courseId);
+    // Redirect to customize page
+    window.location.href = 'customize.html';
+}
+
+ // ===== Load base course for customization if available ===== 
+function loadBaseCourseForCustomize() {
+    if (document.body.id !== 'page-customize') return;
+    const baseCourseId = localStorage.getItem('baseCourseId');
+    if (!baseCourseId) return;
+    // Fetch course details
+    fetch(`${API_BASE}/courses/${baseCourseId}/`)
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to load course');
+            return res.json();
+        })
+        .then(course => {
+            // Set exam category
+            const categorySelect = document.getElementById('cust-category');
+            if (categorySelect) {
+                for (let i = 0; i < categorySelect.options.length; i++) {
+                    if (categorySelect.options[i].value === course.category) {
+                        categorySelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            // Set exam name
+            const examNameInput = document.getElementById('cust-name');
+            if (examNameInput) examNameInput.value = course.course_name || '';
+            // Build syllabus outline from stages
+            if (course.stages && course.stages.length > 0) {
+                let outline = '';
+                course.stages.forEach((stage, idx) => {
+                    outline += `${idx + 1}. ${stage.title}\n`;
+                    if (stage.topics && Array.isArray(stage.topics)) {
+                        stage.topics.forEach(topic => {
+                            outline += `   - ${topic}\n`;
+                        });
+                    }
+                });
+                // Switch to paste tab and fill textarea
+                const pasteTab = document.querySelector('.tab-btn[data-tab="paste"]');
+                if (pasteTab) {
+                    // Deactivate all tabs
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                    document.querySelectorAll('.syllabus-tab-content').forEach(tab => tab.classList.remove('active'));
+                    // Activate paste tab
+                    pasteTab.classList.add('active');
+                    document.getElementById('tab-paste').classList.add('active');
+                }
+                const pasteTextarea = document.getElementById('cust-paste');
+                if (pasteTextarea) pasteTextarea.value = outline.trim();
+            }
+            // Optionally show a notice that a base course was loaded
+            showToast('Course loaded as base for customization', 'info');
+        })
+        .catch(err => {
+            console.error('Could not load base course:', err);
+            showToast('Failed to load base course', 'error');
+        });
+}
+
+// Call on DOM ready (script is deferred, so runs after HTML parsed)
+loadBaseCourseForCustomize();
+
+// ===== Chatbot Functionality =====
+function initChatbot() {
+    const modal = document.getElementById('chatbot-modal');
+    const toggleBtn = document.getElementById('chatbot-toggle');
+    const closeBtn = document.getElementById('chatbot-close');
+    const input = document.getElementById('chatbot-input');
+    const sendBtn = document.getElementById('chatbot-send');
+    const messagesContainer = document.getElementById('chatbot-messages');
+
+    if (!modal || !toggleBtn || !closeBtn || !input || !sendBtn || !messagesContainer) {
+        console.warn('Chatbot elements not found');
+        return;
+    }
+
+    // Open modal
+    toggleBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+        input.focus();
+    });
+
+    // Close modal
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        input.value = '';
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+            modal.style.display = 'none';
+            input.value = '';
+        }
+    });
+
+    // Send message
+    function sendMessage() {
+        const message = input.value.trim();
+        if (!message) return;
+
+        // Add user message to chat
+        addMessage(message, 'user');
+        input.value = '';
+
+        // Show loading indicator (optional)
+        // For simplicity, we'll just send and wait for response
+
+        // Call backend API
+        fetch(`${API_BASE}/chat/`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ message })
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (res.ok) {
+                addMessage(data.response || '', 'bot');
+            } else {
+                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+                showToast('Chatbot error: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Chatbot error:', err);
+            addMessage('Sorry, I couldn\'t connect to the server. Please check your connection.', 'bot');
+            showToast('Network error', 'error');
+        });
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Helper to add a message to the chat
+    function addMessage(text, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}-message`;
+
+        const icon = document.createElement('i');
+        icon.className = type === 'bot' ? 'fas fa-robot' : 'fas fa-user';
+
+        const textDiv = document.createElement('div');
+        textDiv.className = 'message-text';
+        textDiv.textContent = text;
+
+        messageDiv.appendChild(icon);
+        messageDiv.appendChild(textDiv);
+        messagesContainer.appendChild(messageDiv);
+
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
+
+// Initialize chatbot on DOM load
+
+ // ===== Chatbot functionality =====
+function toggleChatbot() {
+    const modal = document.getElementById('chatbot-modal');
+    if (modal) {
+        modal.style.display = (modal.style.display === 'flex' ? 'none' : 'flex');
+        if (modal.style.display === 'flex') {
+            // Focus the input when opening
+            setTimeout(() => {
+                document.getElementById('chatbot-input').focus();
+            }, 100);
+        }
+    }
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chatbot-input');
+    const messagesContainer = document.getElementById('chatbot-messages');
+    const text = input.value.trim();
+    
+    if (!text) return;
+    
+    // Disable input and button while sending
+    input.disabled = true;
+    document.getElementById('chatbot-send').disabled = true;
+    input.placeholder = 'Sending...';
+    
+    // Add user message to the chat
+    const userMessageDiv = document.createElement('div');
+    userMessageDiv.className = 'message user-message';
+    userMessageDiv.innerHTML = `
+        <i class="fas fa-user"></i>
+        <div class="message-text">${text}</div>
+    `;
+    messagesContainer.appendChild(userMessageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Clear input
+    input.value = '';
+    
+    // Send request to backend
+    fetch(`${API_BASE}/chat/`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ message: text })
+    })
+    .then(async res => {
+        const data = await res.json();
+        if (res.ok) {
+            // Add bot message
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.className = 'message bot-message';
+            botMessageDiv.innerHTML = `
+                <i class="fas fa-robot"></i>
+                <div class="message-text">${data.response}</div>
+            `;
+            messagesContainer.appendChild(botMessageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        } else {
+            // Show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'message bot-message';
+            errorDiv.innerHTML = `
+                <i class="fas fa-robot"></i>
+                <div class="message-text">Sorry, I encountered an error. Please try again.</div>
+            `;
+            messagesContainer.appendChild(errorDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    })
+    .catch(err => {
+        console.error('Chatbot error:', err);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'message bot-message';
+        errorDiv.innerHTML = `
+            <i class="fas fa-robot"></i>
+            <div class="message-text">Network error. Please check your connection.</div>
+        `;
+        messagesContainer.appendChild(errorDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    })
+    .finally(() => {
+        // Re-enable input
+        input.disabled = false;
+        document.getElementById('chatbot-send').disabled = false;
+        input.placeholder = 'Ask me about your studies...';
+        input.focus();
+    });
+}
+
+// Event listeners for chatbot
+document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('chatbot-toggle');
+    const closeBtn = document.getElementById('chatbot-close');
+    const sendBtn = document.getElementById('chatbot-send');
+    const input = document.getElementById('chatbot-input');
+    
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleChatbot();
+        });
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            document.getElementById('chatbot-modal').style.display = 'none';
+        });
+    }
+    
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendChatMessage);
+    }
+    
+    if (input) {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+    }
+    
+    // Close modal when clicking outside the modal content
+    const modal = document.getElementById('chatbot-modal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    }
+});
