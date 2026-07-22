@@ -1,5 +1,5 @@
 # 🎓 GradePath — AI-Driven Multi-Tier Grade-Targeted Study Planner
-
+🔗🪶https://gradepath-gu3q.onrender.com/
 <p align="center">
   <img src="https://img.shields.io/badge/Django-6.x-092E20?style=for-the-badge&logo=django&logoColor=white" alt="Django"/>
   <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
